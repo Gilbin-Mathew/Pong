@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <time.h>
 
 struct termios PreTermState;
 
@@ -19,6 +21,7 @@ int32_t CurrentBallYIndex;
 int32_t CurrentBallXIndex;
 bool GameOver;
 int16_t PaddleIndex;
+uint8_t PaddleSpeed = 2;
 
 char Window[HEIGHT * WIDTH];
 
@@ -66,6 +69,7 @@ static char pressedKey(void)
 
 int main(void)
 {
+    srand(time(NULL));
     initPong();
     while (!GameOver) {
         processInputs(pressedKey());
@@ -98,8 +102,10 @@ void initPong(void)
     CurrentDirection = -1;
     DeltaX = -1;
     DeltaY = -1;
-    CurrentBallYIndex = HEIGHT - 3;
-    CurrentBallXIndex = WIDTH / 2;
+    int randY = rand() % (HEIGHT - 3);
+    int randX = rand() % (WIDTH / 2);
+    CurrentBallYIndex = randY < 2 ? HEIGHT - 3 : randY;
+    CurrentBallXIndex = randX < 2 ? WIDTH / 2 : randX;
     return;
 }
 
@@ -107,19 +113,19 @@ void processInputs(char input)
 {
     switch (input) {
         case TORIGHT:
-            if ( Window[PaddleIndex + PADDLEWIDTH + 2] == LBORDERCHARTYPE){
+            if ( Window[PaddleIndex + PADDLEWIDTH + PaddleSpeed] == LBORDERCHARTYPE){
                 PaddleIndex = PaddleIndex;
             }
             else {
-                PaddleIndex = PaddleIndex + 2;
+                PaddleIndex = PaddleIndex + PaddleSpeed;
             }
             break;
         case TOLEFT:
-            if (Window[PaddleIndex - 2] == RBORDERCHARTYPE) {
-                PaddleIndex = PaddleIndex - 2;
+            if (Window[PaddleIndex - PaddleSpeed] == RBORDERCHARTYPE) {
+                PaddleIndex = PaddleIndex;
             }
             else {
-                PaddleIndex = PaddleIndex - 2;
+                PaddleIndex = PaddleIndex - PaddleSpeed;
             }
             break;
         case 'q':
@@ -225,25 +231,20 @@ bool isCollided(void)
         case LBORDERCHARTYPE:
             DeltaX = -(DeltaX);
             return true;
-            break;
         case RBORDERCHARTYPE:
             DeltaX = -(DeltaX);
             return true;
-            break;
         case TBORDERCHARTYPE:
             DeltaY = -(DeltaY);
             return true;
-            break;
         case BBORDERCHARTYPE:
             GameOver = true;
-            break;
+            return true;
         case PADDLECHARTYPE:
             DeltaY = -(DeltaY);
             return true;
-            break;
         default:
             return false;
-            break;
     }
     return false;
 }
